@@ -1,0 +1,31 @@
+name: Motion lab - public library package
+on:
+  push:
+    branches: [motion-lab-dependencies-20260928]
+    paths: [.github/workflows/motion-lab-dependencies.yml]
+permissions:
+  contents: read
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Package public open-source libraries only
+        run: |
+          mkdir -p /tmp/motion-lab vendor
+          npm install --prefix /tmp/motion-lab --ignore-scripts --no-audit --no-fund three@0.180.0 p5@1.11.3
+          cp /tmp/motion-lab/node_modules/three/build/three.module.js vendor/
+          cp /tmp/motion-lab/node_modules/three/build/three.core.js vendor/
+          cp /tmp/motion-lab/node_modules/three/LICENSE vendor/THREE-LICENSE.txt
+          cp /tmp/motion-lab/node_modules/p5/lib/p5.min.js vendor/
+          cp /tmp/motion-lab/node_modules/p5/license.txt vendor/P5-LICENSE.txt || cp /tmp/motion-lab/node_modules/p5/LICENSE vendor/P5-LICENSE.txt || true
+          printf '{"three":"0.180.0","p5":"1.11.3"}\n' > vendor/versions.json
+          sha256sum vendor/*.js > vendor/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: motion-lab-browser-libraries
+          path: vendor/
+          retention-days: 7
